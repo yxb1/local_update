@@ -22,16 +22,23 @@ void LocalUpdate::UpdateHandle() {
             update_ptr->monitor->g_cond.wait(myLock);
             std::cout << GREEN << "Info : leave waiting state." << RESET << std::endl;
         }
+
         if(parser->GetPkgNum() == 0) {
             continue;
         }
         else {
+            for(uint8_t i = 0; i < parser->GetPkgNum(); i++) {
+                if(!pkg_info[i].pkg_type.compare("HAOMO")) {
+                    KillSocProgram(&pkg_info[i]);
+                }
+            }
             int ret = UDiskMount();
             if(!SYSTEM_RUN_RESULT(ret)) {
                 std::cout << RED << "Error: mount failed" << RESET << std::endl;
                 continue;
             }
         }
+
         for(uint8_t i = 0; i < parser->GetPkgNum(); i++) {
             if(!pkg_info[i].pkg_type.compare("HAOMO")) {
                 std::cout << GREEN << "Info : update haomo package" << RESET << std::endl;
@@ -55,6 +62,7 @@ void LocalUpdate::UpdateHandle() {
                 std::cout << RED << "Error: pkg_type not surport" << RESET << std::endl;
             }
         }
+
         if(parser->GetPkgNum() == 0) {
             continue;
         }
@@ -69,7 +77,6 @@ void LocalUpdate::UpdateHandle() {
 }
 
 int LocalUpdate::SOCUpdate(PKG_INFO *pkg) {
-    //std::cout << GREEN << "==========haomo update==========" << RESET << std::endl;
     char src_path[256] = {0};
     if(CheckValidity(pkg->cache_path.c_str(), src_path, pkg) == false) {
         std::cout << RED << "Error: don't find update package" << RESET << std::endl;
@@ -98,12 +105,10 @@ int LocalUpdate::SOCUpdate(PKG_INFO *pkg) {
 
     system("sync");
     RemountPartition("/opt/app", "ro");
-    //std::cout << GREEN << "==========haomo update end======" << RESET << std::endl;
     return 0;
 }
 
 int LocalUpdate::AVPUpdate(PKG_INFO *pkg) {
-    //std::cout << GREEN << "**********avp update**********" << RESET << std::endl;
     char src_path[256] = {0};
     if(CheckValidity(pkg->cache_path.c_str(), src_path, pkg) == false) {
         std::cout << RED << "Error: don't find update package" << RESET << std::endl;
@@ -150,7 +155,7 @@ int LocalUpdate::AVPUpdate(PKG_INFO *pkg) {
     //if(!SYSTEM_RUN_RESULT(ret)) {
     //    std::cout << RED << "Error: rm avp unzip bag - " << strerror(errno) << RESET << std::endl;
     //}
-    //std::cout << GREEN << "**********avp update end******" << RESET << std::endl;
+
     return 0;
 }
 
@@ -158,8 +163,8 @@ int LocalUpdate::UDiskMount() {
     std::string mnt = "mount /dev/";
     mnt += monitor->GetUDev();
     mnt += "1 ";
-    mnt.append(pkg_info[0].cache_path.c_str());  //take a look
-    std::cout << "Debug: " << mnt.c_str() << std::endl;
+    mnt.append(pkg_info[0].cache_path.c_str());
+    std::cout << GREEN << "Info : " << mnt.c_str() << RESET << std::endl;
     return system(mnt.c_str());
 }
 
@@ -167,7 +172,7 @@ int LocalUpdate::UDiskUmount() {
     std::string mnt = "umount -v /dev/";
     mnt += monitor->GetUDev();
     mnt += "1";
-    std::cout << "Debug: " << mnt.c_str() << std::endl;
+    std::cout << GREEN << "Info : " << mnt.c_str() << RESET << std::endl;
     return system(mnt.c_str());
 }
 
@@ -188,7 +193,7 @@ int LocalUpdate::RemountPartition(const char *partition, const char *rw) {
     cmd += rw;
     cmd += " ";
     cmd.append(partition);
-    std::cout << "Debug: " << cmd.c_str() << std::endl;
+    std::cout << GREEN << "Info : " << cmd.c_str() << RESET << std::endl;
     return system(cmd.c_str());
 }
 
@@ -239,6 +244,7 @@ bool LocalUpdate::CheckValidity(const char * dir, char *UPath, PKG_INFO *pkg, in
         printf("Debug: d_name - %s\n", pdirent->d_name);
 		if((strcmp(pdirent->d_name, ".") == 0) || (strcmp(pdirent->d_name, "..") == 0)) continue;
 		if(strstr(pdirent->d_name, "=") != NULL) continue;
+        if('.' == pdirent->d_name[0]) continue;
 		strcpy(fullpath, parentpath);
 		strcat(fullpath, pdirent->d_name);
         printf("Debug: fullpath - %s\n", fullpath);
@@ -256,7 +262,10 @@ bool LocalUpdate::CheckValidity(const char * dir, char *UPath, PKG_INFO *pkg, in
             if(idx == std::string::npos) {
                 if(depth > 1)
 				{
-					if(CheckValidity((const char *)fullpath, UPath, pkg, (depth - 1))) return true;
+					if(CheckValidity((const char *)fullpath, UPath, pkg, (depth - 1))) {
+                        closedir(pdir);
+                        return true;
+                    }
 				}
 				else
 				{
@@ -268,6 +277,7 @@ bool LocalUpdate::CheckValidity(const char * dir, char *UPath, PKG_INFO *pkg, in
 				strcat(storagepath, "/");
 				strcat(storagepath, pdirent->d_name);
 				strcpy(UPath, storagepath);
+                closedir(pdir);
                 printf("\033[32mInfo : it's a trusted UDisk, copy path = %s\033[0m\n", storagepath);
 				return true;
             }
@@ -276,3 +286,10 @@ bool LocalUpdate::CheckValidity(const char * dir, char *UPath, PKG_INFO *pkg, in
 	return false;
 }
 
+int LocalUpdate::KillSocProgram(PKG_INFO *pkg) {
+    std::string cmd = "/bin/bash ";
+    cmd += pkg->dst_path.c_str();
+    cmd += "/output/stop_all.sh";
+    std::cout << GREEN << "Info : " << cmd.c_str() << RESET << std::endl;
+    return system(cmd.c_str());
+}

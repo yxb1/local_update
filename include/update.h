@@ -26,6 +26,7 @@ public:
     int UnzipTarBag(char *tgz, const char *dst = NULL);
     int AVPUpdate(PKG_INFO *pkg);
     int RemountPartition(const char *partition, const char *rw);
+    int KillSocProgram(PKG_INFO *pkg);
 
 private:
     ParseXML     *parser;
