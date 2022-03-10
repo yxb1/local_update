@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting_list>
+	<version>1.0.0</version>
+	<author>makou_yuan@163.com</author>
+	<build_time>2022-3-07 13:14:52</build_time>
+	<haomo_package>
+		<pkg cache_path="/opt/cache" dst_path="/opt/app/haomo" pkg_type="HAOMO">P03_P1.5B</pkg>
+		<pkg cache_path="/opt/cache" dst_path="/opt/haomo/data" pkg_type="AVP">avp_release</pkg>
+	</haomo_package>
+</setting_list>
