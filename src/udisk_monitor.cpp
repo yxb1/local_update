@@ -39,7 +39,7 @@ char UDiskMonitor::UdiskNotify() {
     {
         char recv_buff[1024*20] = {0};
         recv(u_sock, recv_buff, buff_size, 0);
-        printf("Recv :  %s\n", recv_buff);
+        printf("Recv : %s\n", recv_buff);
         std::cmatch regex_result;
         if(std::regex_match(recv_buff, regex_result, std::regex("(\\w+)@.*?/block/(s\\w{2})")))
         {

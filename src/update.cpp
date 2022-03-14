@@ -9,7 +9,8 @@ LocalUpdate *update_ptr = NULL;
 LocalUpdate::LocalUpdate(UDiskMonitor *_monitor, ParseXML *_parser)
  : monitor(_monitor), parser(_parser) {
     handle = std::thread(&LocalUpdate::UpdateHandle, this);
-    parser->xml_parser(pkg_info);
+    std::string _xml_path = GetSelfExePath();
+    parser->xml_parser(pkg_info, _xml_path.c_str());
     std::cout << "Debug: LocalUpdate constructor" << std::endl; 
 };
 
@@ -30,6 +31,7 @@ void LocalUpdate::UpdateHandle() {
             for(uint8_t i = 0; i < parser->GetPkgNum(); i++) {
                 if(!pkg_info[i].pkg_type.compare("HAOMO")) {
                     KillSocProgram(&pkg_info[i]);
+                    sleep(1);
                 }
             }
             int ret = UDiskMount();
@@ -147,15 +149,16 @@ int LocalUpdate::AVPUpdate(PKG_INFO *pkg) {
     }
     system("sync");
 
-    //script_cmd.clear();
-    //script_cmd = "rm -fr ";
-    //script_cmd.append(_dir);
-    //std::cout << GREEN << "Info : " << script_cmd << RESET << std::endl;
-    //ret = system(script_cmd.c_str());
-    //if(!SYSTEM_RUN_RESULT(ret)) {
-    //    std::cout << RED << "Error: rm avp unzip bag - " << strerror(errno) << RESET << std::endl;
-    //}
-
+    sleep(3);
+    script_cmd.clear();
+    script_cmd = "rm -fr ";
+    script_cmd.append(_dir);
+    std::cout << GREEN << "Info : " << script_cmd << RESET << std::endl;
+    ret = system(script_cmd.c_str());
+    if(!SYSTEM_RUN_RESULT(ret)) {
+        std::cout << RED << "Error: rm avp unzip bag - " << strerror(errno) << RESET << std::endl;
+    }
+    system("sync");
     return 0;
 }
 
@@ -292,4 +295,29 @@ int LocalUpdate::KillSocProgram(PKG_INFO *pkg) {
     cmd += "/output/stop_all.sh";
     std::cout << GREEN << "Info : " << cmd.c_str() << RESET << std::endl;
     return system(cmd.c_str());
+}
+std::string LocalUpdate::GetSelfExePath() {
+    char path[128] = {0};
+    memset(path, 0, 128);
+    std::string _xml_path;
+    int ret = readlink("/proc/self/exe", path, 128);
+    if(ret > 0) {
+        for(int i = ret; i >= 0; i--) {
+            if(path[i] == '/') {
+                path[i + 1] = '.';
+                path[i + 2] = '.';
+                path[i + 3] = 0;
+                break;
+            }
+        }
+        _xml_path.append(path);
+        _xml_path += "/xml/setting.xml";
+        std::cout << GREEN << "Info : xml path - " << _xml_path << RESET << std::endl;
+        return _xml_path;
+    }
+    else {
+        std::cout << RED << "Error: get exe path failed." << RESET << std::endl;
+        exit(-1);
+        return NULL;
+    }
 }

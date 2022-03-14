@@ -7,6 +7,7 @@ ParseXML::ParseXML() {
 
 void ParseXML::xml_parser(PKG_INFO *pck_info, const char *file) {
     TiXmlDocument doc;
+    std::cout << GREEN << "Info : file path in xml_parser - " << file << RESET << std::endl;
     if (!doc.LoadFile(file)) {
         std::cout << RED << "Error: load xml file failed - " << doc.ErrorDesc() << RESET << std::endl;
         exit(-1);

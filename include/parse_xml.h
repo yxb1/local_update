@@ -16,7 +16,7 @@ class ParseXML
 public:
     ParseXML();
     ~ParseXML() = default;
-    void xml_parser(PKG_INFO *pck_info, const char *file = "../xml/setting.xml");
+    void xml_parser(PKG_INFO *pck_info, const char *file = "/opt/app/update/xml/setting.xml");
     uint8_t GetPkgNum();
 
 private:

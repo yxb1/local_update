@@ -27,6 +27,7 @@ public:
     int AVPUpdate(PKG_INFO *pkg);
     int RemountPartition(const char *partition, const char *rw);
     int KillSocProgram(PKG_INFO *pkg);
+    std::string GetSelfExePath();
 
 private:
     ParseXML     *parser;
