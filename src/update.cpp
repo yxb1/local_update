@@ -72,8 +72,10 @@ void LocalUpdate::UpdateHandle() {
             int ret = UDiskUmount();
             if(!SYSTEM_RUN_RESULT(ret)) {
                 std::cout << RED << "Error: umount failed" << RESET << std::endl;
+                system("reboot");
                 continue;
             }
+            system("reboot");
         }
     }
 }
